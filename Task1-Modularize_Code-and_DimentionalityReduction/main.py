@@ -5,7 +5,12 @@ from torch_geometric.data import Data
 from typing import Set, Tuple
 
 
-from config import *
+from config import (
+    INPUT_STL_PATH,
+    OUTPUT_VTM_PATH,
+    OUTPUT_PYG_PATH,
+    MODEL_NAME,
+)
 from src.mesh.loader import load_mesh
 from src.mesh.surface import extract_surface
 from src.mesh.features import extract_surface_features
@@ -17,58 +22,60 @@ from src.export.vtm_exporter import save_vtm
 
 
 def main() -> None:
-    pv.set_jupyter_backend('html')
+    try:
+        pv.set_jupyter_backend('html')
+    except ImportError:
+        pass
 
+    
     print("\nLoading mesh...")
     mesh: pv.PolyData = load_mesh(
         f"{INPUT_STL_PATH}/{MODEL_NAME}.stl"
     )
+    print("Number of points in given object:", mesh.n_points)
+    print("Number of cells in given object:", mesh.n_cells)    
+    mesh.plot()
+
 
     print("\nExtracting surface...")
-
     surface_mesh: pv.PolyData = extract_surface(
         mesh
     )
 
-    print("\nExtracting surface features...")
 
+    print("\nExtracting surface features...")
     node_features: np.ndarray
     normals: np.ndarray
-
     node_features, normals = extract_surface_features(
         surface_mesh
     )
 
-    print("\nBuilding graph edges...")
 
+    print("\nBuilding graph edges...")
     edges: Set[Tuple[int, int]] = build_edges(
         surface_mesh
     )
 
-    print("\nCreating adjacency matrix...")
 
+    print("\nCreating adjacency matrix...")
     adj_matrix: np.ndarray = create_adjacency_matrix(
         surface_mesh.n_points,
         edges
     )
+    print( "Adjacency matrix shape:", adj_matrix.shape )
 
-    print(
-        "Adjacency matrix shape:",
-        adj_matrix.shape
-    )
+
 
     print("\nCreating PyG graph...")
-
     pyg_data: Data = create_pyg_data(
         node_features,
         edges
     )
+    print("\nPyG Data Object:-", pyg_data)
 
-    print("\nPyG Data Object:")
-    print(pyg_data)
 
-    print("\nSaving PyG graph...")
 
+    print("\nSaving PyG graph(.pt format)...")
     torch.save(
         pyg_data,
         f"{OUTPUT_PYG_PATH}/{MODEL_NAME}.pt"
@@ -79,16 +86,16 @@ def main() -> None:
         f"{OUTPUT_PYG_PATH}"
     )
 
-    print("\nSaving VTM file...")
 
+    print("\nSaving VTM file...")
     save_vtm(
         surface_mesh,
         edges,
         f"{OUTPUT_VTM_PATH}/{MODEL_NAME}.vtm"
     )
 
-    print("\nLaunching visualization...")
 
+    print("\nLaunching visualization...")
     visualize_graph(
         surface_mesh,
         pyg_data

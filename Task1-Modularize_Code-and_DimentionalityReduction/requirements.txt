@@ -1,6 +1,7 @@
 pyvista
-vtk
+vtk<9.6.0
 numpy
 torch
 torch-geometric
 trame
+plotly

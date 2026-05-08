@@ -1,7 +1,7 @@
 from typing import Set, Tuple
 import numpy as np
 
-def create_adjacency_matrix(num_nodes: int, edges: Set[Tuple[int, int]]) -> no.array:
+def create_adjacency_matrix(num_nodes: int, edges: Set[Tuple[int, int]]) -> np.array:
     adj_matrix: np.ndarray = np.zeros((num_nodes, num_nodes), dtype=int)
 
     for u, v in edges:
