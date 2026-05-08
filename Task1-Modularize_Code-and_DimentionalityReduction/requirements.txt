@@ -1,0 +1,6 @@
+pyvista
+vtk
+numpy
+torch
+torch-geometric
+trame
