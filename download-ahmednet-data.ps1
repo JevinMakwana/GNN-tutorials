@@ -1,14 +1,14 @@
 $ErrorActionPreference = 'Stop'
 
-# Download selected files for run_1 from the AhmedML dataset.
+# Download selected files for runs 1-10 from the AhmedML dataset.
 # Required: huggingface_hub CLI
 # Install with: pip install -U "huggingface_hub[cli]"
 
 $HF_OWNER = 'neashton'
 $HF_PREFIX = 'ahmedml'
 $REPO_ID = "$HF_OWNER/$HF_PREFIX"
-$RUN_ID = 1
-$RUN_DIR = "run_$RUN_ID"
+$START_RUN = 1
+$END_RUN = 10
 
 $LOCAL_DIR = '.\ahmed_data'
 New-Item -ItemType Directory -Path $LOCAL_DIR -Force | Out-Null
@@ -18,7 +18,7 @@ if (-not $hfCli) {
     throw 'huggingface-cli not found. Install with: pip install -U "huggingface_hub[cli]"'
 }
 
-Write-Host "Downloading selected files for $RUN_DIR into $LOCAL_DIR..."
+Write-Host "Downloading runs $START_RUN-$END_RUN into $LOCAL_DIR..."
 
 function Download-One {
     param(
@@ -37,32 +37,38 @@ function Download-One {
     & huggingface-cli @args
 }
 
-# Download exact files first.
-Download-One -RemotePath "$RUN_DIR/ahmed_$RUN_ID.stl"
-Download-One -RemotePath "$RUN_DIR/force_mom_$RUN_ID.csv"
-Download-One -RemotePath "$RUN_DIR/force_mom_varref_$RUN_ID.csv"
+for ($runNum = $START_RUN; $runNum -le $END_RUN; $runNum++) {
+    $runDir = "run_$runNum"
+    Write-Host "Downloading $runDir..."
 
-# Download full images folder.
-$imageArgs = @(
-    'download',
-    $REPO_ID,
-    '--repo-type', 'dataset',
-    '--local-dir', $LOCAL_DIR,
-    '--include', "$RUN_DIR/images/**"
-)
-& huggingface-cli @imageArgs
+    # Download STL and CSV files.
+    Download-One -RemotePath "$runDir/ahmed_$runNum.stl"
+    Download-One -RemotePath "$runDir/force_mom_$runNum.csv"
+    Download-One -RemotePath "$runDir/force_mom_varref_$runNum.csv"
 
-$runLocalDir = Join-Path $LOCAL_DIR $RUN_DIR
-$requiredFiles = @(
-    (Join-Path $runLocalDir "ahmed_$RUN_ID.stl"),
-    (Join-Path $runLocalDir "force_mom_$RUN_ID.csv"),
-    (Join-Path $runLocalDir "force_mom_varref_$RUN_ID.csv")
-)
+    # Download images folder.
+    $imageArgs = @(
+        'download',
+        $REPO_ID,
+        '--repo-type', 'dataset',
+        '--local-dir', $LOCAL_DIR,
+        '--include', "$runDir/images/**"
+    )
+    & huggingface-cli @imageArgs
 
-foreach ($file in $requiredFiles) {
-    if (-not (Test-Path -Path $file -PathType Leaf)) {
-        throw "Expected file missing after download: $file"
+    # Validate required files exist.
+    $runLocalDir = Join-Path $LOCAL_DIR $runDir
+    $requiredFiles = @(
+        (Join-Path $runLocalDir "ahmed_$runNum.stl"),
+        (Join-Path $runLocalDir "force_mom_$runNum.csv"),
+        (Join-Path $runLocalDir "force_mom_varref_$runNum.csv")
+    )
+
+    foreach ($file in $requiredFiles) {
+        if (-not (Test-Path -Path $file -PathType Leaf)) {
+            throw "Expected file missing for $runDir : $file"
+        }
     }
 }
 
-Write-Host "Done. Downloaded files under: $LOCAL_DIR/$RUN_DIR"
+Write-Host "Done. Downloaded runs $START_RUN-$END_RUN under: $LOCAL_DIR"

@@ -2,6 +2,7 @@ import torch
 import pyvista as pv
 import numpy as np
 from torch_geometric.data import Data
+from pathlib import Path
 # from typing import Set, Tuple
 
 
@@ -38,7 +39,7 @@ def main() -> None:
     )
     print("Number of points in given object:", mesh.n_points)
     print("Number of cells in given object:", mesh.n_cells)    
-    mesh.plot()
+    # mesh.plot()
 
 
     print("\nExtracting surface...")
@@ -84,7 +85,7 @@ def main() -> None:
     print("\nSaving PyG graph(.pt format)...")
     torch.save(
         pyg_data,
-        f"{OUTPUT_PYG_PATH}/{MODEL_NAME}.pt"
+        OUTPUT_PYG_PATH
     )
 
     print(
@@ -97,7 +98,7 @@ def main() -> None:
     save_vtm(
         surface_mesh,
         edge_index,
-        f"{OUTPUT_VTM_PATH}/{MODEL_NAME}.vtm"
+        OUTPUT_VTM_PATH
     )
     # save_vtm(
     #     surface_mesh,
@@ -107,9 +108,13 @@ def main() -> None:
 
 
     print("\nLaunching visualization...")
+    html_output_path = Path(OUTPUT_PYG_PATH).with_name(
+        f"{MODEL_NAME}_visualization_interactive.html"
+    )
     visualize_graph(
         surface_mesh,
-        pyg_data
+        pyg_data,
+        html_output_path
     )
 
 

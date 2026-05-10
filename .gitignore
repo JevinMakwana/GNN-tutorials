@@ -1,2 +1,11 @@
 /.venv
 *__pycache__
+
+# /ahmed_data/**/*.png
+# /ahmed_data/**/*.csv
+/ahmed_data
+**/*.html
+/batch_results/outputs/**
+/batch_results/logs/**
+/batch_results/batch_results.json
+/config.py

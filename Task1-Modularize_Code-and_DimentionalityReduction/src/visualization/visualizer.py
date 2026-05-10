@@ -1,4 +1,5 @@
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 import pyvista as pv
 import numpy as np
 import torch
@@ -19,7 +20,11 @@ from torch_geometric.data import Data
 #     return np.array(lines)
 
 
-def visualize_graph( mesh: pv.PolyData, pyg_data: Optional[Data] = None ) -> None:
+def visualize_graph(
+    mesh: pv.PolyData,
+    pyg_data: Optional[Data] = None,
+    html_path: Union[str, Path] = "visualization_interactive.html",
+) -> None:
     # Create Plotly figure
     fig = go.Figure()
 
@@ -93,7 +98,8 @@ def visualize_graph( mesh: pv.PolyData, pyg_data: Optional[Data] = None ) -> Non
         height=800
     )
 
-    html_path: str = "visualization_interactive.html"
-    fig.write_html(html_path)
+    html_path = Path(html_path)
+    html_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.write_html(str(html_path))
     print(f"Interactive visualization saved to: {html_path}")
     print(f"Open this file in a web browser to interact with the 3D visualization")

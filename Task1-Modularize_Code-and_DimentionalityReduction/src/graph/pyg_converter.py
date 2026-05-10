@@ -18,7 +18,7 @@ from torch_geometric.data import Data
 def create_pyg_data( node_features: np.ndarray, edge_index: torch.Tensor ) -> Data:
     # edge_index = create_edge_index(edges)
 
-    x: torch.Tensor = torch.as_tensor(
+    x: torch.Tensor = torch.tensor(
         node_features,
         dtype=torch.float
     )
