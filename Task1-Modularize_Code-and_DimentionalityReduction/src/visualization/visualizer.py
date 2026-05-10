@@ -1,3 +1,4 @@
+from typing import Optional
 import pyvista as pv
 import numpy as np
 import torch
@@ -18,11 +19,8 @@ from torch_geometric.data import Data
 #     return np.array(lines)
 
 
-def visualize_graph( mesh: pv.PolyData, pyg_data: Data ) -> None:
-    points: np.ndarray = pyg_data.x[:, :3].numpy()
-    edge_index: np.ndarray = pyg_data.edge_index.numpy()
-
-    # Create plotly figure
+def visualize_graph( mesh: pv.PolyData, pyg_data: Optional[Data] = None ) -> None:
+    # Create Plotly figure
     fig = go.Figure()
 
     # Add mesh points as scatter plot
@@ -33,50 +31,54 @@ def visualize_graph( mesh: pv.PolyData, pyg_data: Data ) -> None:
         mode='markers',
         marker=dict(
             size=2,
-            color='lightblue',
+            color='green',
             opacity=0.6
         ),
         name='Original Mesh Points',
         hovertext=[f"Point {i}" for i in range(len(mesh.points))],
         hoverinfo='text'
     ))
+    
+    if pyg_data:
+        points: np.ndarray = pyg_data.x[:, :3].numpy()
+        edge_index: np.ndarray = pyg_data.edge_index.numpy()
 
-    # Add graph edges as lines
-    edge_x = []
-    edge_y = []
-    edge_z = []
+        # Add graph edges as lines
+        edge_x = []
+        edge_y = []
+        edge_z = []
 
-    for i in range(edge_index.shape[1]):
-        u, v = edge_index[0, i], edge_index[1, i]
-        edge_x.extend([points[u, 0], points[v, 0], None])
-        edge_y.extend([points[u, 1], points[v, 1], None])
-        edge_z.extend([points[u, 2], points[v, 2], None])
+        for i in range(edge_index.shape[1]):
+            u, v = edge_index[0, i], edge_index[1, i]
+            edge_x.extend([points[u, 0], points[v, 0], None])
+            edge_y.extend([points[u, 1], points[v, 1], None])
+            edge_z.extend([points[u, 2], points[v, 2], None])
 
-    fig.add_trace(go.Scatter3d(
-        x=edge_x,
-        y=edge_y,
-        z=edge_z,
-        mode='lines',
-        line=dict(color='red', width=1),
-        name='Graph Edges',
-        hoverinfo='skip'
-    ))
+        fig.add_trace(go.Scatter3d(
+            x=edge_x,
+            y=edge_y,
+            z=edge_z,
+            mode='lines',
+            line=dict(color='red', width=1),
+            name='Graph Edges',
+            hoverinfo='skip'
+        ))
 
-    # Add graph nodes
-    fig.add_trace(go.Scatter3d(
-        x=points[:, 0],
-        y=points[:, 1],
-        z=points[:, 2],
-        mode='markers',
-        marker=dict(
-            size=3,
-            color='black',
-            opacity=0.8
-        ),
-        name='Graph Nodes',
-        hovertext=[f"Node {i}" for i in range(len(points))],
-        hoverinfo='text'
-    ))
+        # Add graph nodes
+        fig.add_trace(go.Scatter3d(
+            x=points[:, 0],
+            y=points[:, 1],
+            z=points[:, 2],
+            mode='markers',
+            marker=dict(
+                size=3,
+                color='black',
+                opacity=0.8
+            ),
+            name='Graph Nodes',
+            hovertext=[f"Node {i}" for i in range(len(points))],
+            hoverinfo='text'
+        ))
 
     fig.update_layout(
         title='CAD Graph Visualization',

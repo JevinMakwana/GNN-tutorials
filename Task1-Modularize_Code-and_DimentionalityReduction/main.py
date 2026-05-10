@@ -2,7 +2,7 @@ import torch
 import pyvista as pv
 import numpy as np
 from torch_geometric.data import Data
-from typing import Set, Tuple
+# from typing import Set, Tuple
 
 
 from config import (
@@ -14,8 +14,12 @@ from config import (
 from src.mesh.loader import load_mesh
 from src.mesh.surface import extract_surface
 from src.mesh.features import extract_surface_features
-from src.graph.graph_builder import build_edges
-from src.graph.adjacency import create_adjacency_matrix
+
+# from src.graph.graph_builder import build_edges
+from src.graph.graph_builder import build_edge_indeces
+
+# from src.graph.adjacency import create_adjacency_matrix
+
 from src.graph.pyg_converter import create_pyg_data
 from src.visualization.visualizer import visualize_graph
 from src.export.vtm_exporter import save_vtm
@@ -52,24 +56,26 @@ def main() -> None:
 
 
     print("\nBuilding graph edges...")
-    edges: Set[Tuple[int, int]] = build_edges(
-        surface_mesh
-    )
+    # edges: Set[Tuple[int, int]] = build_edges(
+    #     surface_mesh
+    # )
+    edge_index: torch.Tensor = build_edge_indeces(mesh)
 
-
-    print("\nCreating adjacency matrix...")
-    adj_matrix: np.ndarray = create_adjacency_matrix(
-        surface_mesh.n_points,
-        edges
-    )
-    print( "Adjacency matrix shape:", adj_matrix.shape )
+    # NO NEED TO CREATE ADJACENCY MATRIX AS ARE ARE USING 
+    # print("\nCreating adjacency matrix...")
+    # adj_matrix: np.ndarray = create_adjacency_matrix(
+    #     surface_mesh.n_points,
+    #     edges
+    # )
+    # print( "Adjacency matrix shape:", adj_matrix.shape )
 
 
 
     print("\nCreating PyG graph...")
     pyg_data: Data = create_pyg_data(
         node_features,
-        edges
+        edge_index
+        # edges
     )
     print("\nPyG Data Object:-", pyg_data)
 
@@ -90,9 +96,14 @@ def main() -> None:
     print("\nSaving VTM file...")
     save_vtm(
         surface_mesh,
-        edges,
+        edge_index,
         f"{OUTPUT_VTM_PATH}/{MODEL_NAME}.vtm"
     )
+    # save_vtm(
+    #     surface_mesh,
+    #     edges,
+    #     f"{OUTPUT_VTM_PATH}/{MODEL_NAME}.vtm"
+    # )
 
 
     print("\nLaunching visualization...")
