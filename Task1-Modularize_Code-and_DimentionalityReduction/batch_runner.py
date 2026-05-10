@@ -47,10 +47,10 @@ def validate_input_files():
             missing.append(f"run_{run_num}: {stl_path}")
         else:
             size_mb = stl_path.stat().st_size / (1024 * 1024)
-            print(f"  ✓ run_{run_num}: {size_mb:.2f} MB")
+            print(f"  run_{run_num}: {size_mb:.2f} MB")
     
     if missing:
-        print("\n✗ Missing input files:")
+        print("\nMissing input files:")
         for m in missing:
             print(f"  - {m}")
         return False
@@ -63,8 +63,8 @@ def update_config(run_num: int):
     output_dir = OUTPUT_ROOT / "outputs" / f"run_{run_num}"
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Use POSIX-style paths in the generated Python config to avoid
-    # accidental escape sequences like '\a' when Python parses backslashes.
+    # POSIX-style path string, ideal for cross-platform
+    # so convert paths to POSIX-style paths 
     config_content = CONFIG_TEMPLATE.format(
         input_path=(input_dir.absolute().as_posix()),
         output_vtm=((output_dir / f"ahmed_{run_num}.vtm").absolute().as_posix()),
@@ -72,7 +72,6 @@ def update_config(run_num: int):
         model_name=f"ahmed_{run_num}"
     )
 
-    # Write config.py into the Task1 folder where main.py lives
     config_path = TASK_DIR / "config.py"
     config_path.write_text(config_content)
 
@@ -98,18 +97,18 @@ def run_pipeline(run_num: int) -> bool:
             )
         
         if result.returncode != 0:
-            print(f"✗ Pipeline failed for run_{run_num} (exit code: {result.returncode})")
+            print(f"  Pipeline failed for run_{run_num} (exit code: {result.returncode})")
             print(f"  See log: {log_file}")
             return False
         
-        print(f"✓ Pipeline succeeded for run_{run_num}")
+        print(f"  Pipeline succeeded for run_{run_num}")
         return True
     
     except subprocess.TimeoutExpired:
-        print(f"✗ Pipeline timed out for run_{run_num} (>600s)")
+        print(f"  Pipeline timed out for run_{run_num} (>600s)")
         return False
     except Exception as e:
-        print(f"✗ Error running pipeline for run_{run_num}: {e}")
+        print(f"  Error running pipeline for run_{run_num}: {e}")
         return False
 
 
@@ -153,7 +152,7 @@ def main():
     # Setup
     setup_batch_results()
     if not validate_input_files():
-        print("\n✗ Input validation failed. Exiting.")
+        print("\nInput validation failed. Exiting.")
         return False
     
     # Process each run
@@ -193,12 +192,16 @@ def main():
     results_file = OUTPUT_ROOT / "batch_results.json"
     with open(results_file, 'w') as f:
         json.dump({
-            "timestamp": datetime.now().isoformat(),
-            "total_runs": len(RUNS),
-            "successes": successes,
-            "failures": failures,
-            "results": results
-        }, f, indent=2)
+                "timestamp": datetime.now().isoformat(),
+                "total_runs": len(RUNS),
+                "successes": successes,
+                "failures": failures,
+                "results": results
+            }, 
+            f,          # The file object to write to 
+            indent=2    # Pretty-prints the JSON with 2-space indentation for readability
+        )
+        
     print(f"\nDetailed results: {results_file}")
     print(f"Logs directory: {(OUTPUT_ROOT / 'logs').absolute()}")
     print(f"Outputs directory: {(OUTPUT_ROOT / 'outputs').absolute()}")
